@@ -1,13 +1,15 @@
-<div class="container">
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<title>English Quiz</title>
+</head>
 
-<h2>Choose Category</h2>
-
-<div th:each="c : ${categories}" class="card">
-
-<a th:href="@{/category/{id}(id=${c.id})}">
-<span th:text="${c.title}"></span>
+<body>
+<h1>Select Category</h1>
+<div th:each="cat : ${categories}">
+<a th:href="@{'/category/' + ${cat.id}}">
+<span th:text="${cat.title}"></span>
 </a>
-
 </div>
-
-</div>
+</body>
+</html>

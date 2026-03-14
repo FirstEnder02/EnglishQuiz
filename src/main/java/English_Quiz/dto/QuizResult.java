@@ -1,5 +1,4 @@
 package English_Quiz.dto;
 
-public class QuizResult {
-    
+public class quizResult {
 }

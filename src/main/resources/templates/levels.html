@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+<title>Levels</title>
+</head>
+
+<body>
+<h2>Select Level</h2>
+<div th:each="level : ${levels}">
+<a th:href="@{'/quiz/' + ${level.id}}">
+Level <span th:text="${level.level}"></span>
+</a>
+</div>
+</body>
+</html>
