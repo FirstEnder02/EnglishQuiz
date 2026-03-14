@@ -1,0 +1,13 @@
+<div class="container">
+
+<h2>Choose Category</h2>
+
+<div th:each="c : ${categories}" class="card">
+
+<a th:href="@{/category/{id}(id=${c.id})}">
+<span th:text="${c.title}"></span>
+</a>
+
+</div>
+
+</div>
