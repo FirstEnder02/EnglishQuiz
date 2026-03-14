@@ -1,15 +1,15 @@
 package English_Quiz.controller;
 
-import English_Quiz.repository.levelRepository;
+import English_Quiz.repository.LevelRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 @Controller
-public class levelController {
-    private final levelRepository levelRepo;
+public class LevelController {
+    private final LevelRepository levelRepo;
 
-    public levelController(levelRepository levelRepo) {
+    public LevelController(LevelRepository levelRepo) {
         this.levelRepo = levelRepo;
     }
     @GetMapping("/category/{id}")

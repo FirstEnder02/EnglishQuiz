@@ -1,15 +1,15 @@
 package English_Quiz.controller;
 
-import English_Quiz.service.quizService;
+import English_Quiz.service.QuizService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 @Controller
-public class quizController {
-    private final quizService quizService;
+public class QuizController {
+    private final QuizService quizService;
 
-    public quizController(quizService quizService) {
+    public QuizController(QuizService quizService) {
         this.quizService = quizService;
     }
     @GetMapping("/quiz/{levelId}")

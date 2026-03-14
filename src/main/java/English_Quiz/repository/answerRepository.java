@@ -1,9 +1,9 @@
 package English_Quiz.repository;
 
-import English_Quiz.model.answer;
+import English_Quiz.model.Answer;
 import org.springframework.data.repository.CrudRepository;
 import java.util.List;
 
-public interface answerRepository extends CrudRepository<answer, Integer> {
-    List<answer> findByQuestionId(int questionId);
+public interface AnswerRepository extends CrudRepository<Answer, Integer> {
+    List<Answer> findByQuestionId(int questionId);
 }

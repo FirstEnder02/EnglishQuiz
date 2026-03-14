@@ -6,7 +6,7 @@ import lombok.Data;
 
 @Data
 @Table("answer")
-public class answer {
+public class Answer {
     @Id
     private Integer id;
     private Integer questionId;

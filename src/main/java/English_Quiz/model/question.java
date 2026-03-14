@@ -10,7 +10,7 @@ import java.util.List;
 
 @Data
 @Table("question")
-public class question {
+public class Question {
     @Id
     private Integer id;
     private Integer levelId;
@@ -20,7 +20,7 @@ public class question {
     private String mediaUrl;
     private List<Object> answers;
 
-    public void setAnswers(List<answer> answers) {
+    public void setAnswers(List<Answer> answers) {
         if (answers == null) {
             this.answers = Collections.emptyList();
         } else {

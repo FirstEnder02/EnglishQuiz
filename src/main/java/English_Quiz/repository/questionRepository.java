@@ -1,9 +1,9 @@
 package English_Quiz.repository;
 
-import English_Quiz.model.question;
+import English_Quiz.model.Question;
 import org.springframework.data.repository.CrudRepository;
 import java.util.List;
 
-public interface questionRepository extends CrudRepository<question, Integer> {
-    List<question> findByLevelId(int levelId);
+public interface QuestionRepository extends CrudRepository<Question, Integer> {
+    List<Question> findByLevelId(int levelId);
 }

@@ -6,7 +6,7 @@ import lombok.Data;
 
 @Data
 @Table("category")
-public class category {
+public class Category {
     @Id
     private Integer id;
     private String title;
