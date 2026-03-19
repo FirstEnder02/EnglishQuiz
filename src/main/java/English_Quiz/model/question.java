@@ -2,6 +2,7 @@ package English_Quiz.model;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.annotation.Transient;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -18,7 +19,9 @@ public class Question {
     private String explaination;
     private String type;
     private String mediaUrl;
-    private List<Object> answers;
+
+    @Transient
+    private List<Answer> answers;
 
     public void setAnswers(List<Answer> answers) {
         if (answers == null) {

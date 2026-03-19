@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>English Quiz — Choose a Category</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" th:href="@{/}">English<em>Quiz</em></a>
+</nav>
+
+<div class="page-wrapper">
+  <h1 class="page-title">Choose a Category</h1>
+  <p class="page-sub">Pick a topic to start practising your English.</p>
+
+  <div th:if="${#lists.isEmpty(categories)}" class="empty-box">
+    <div class="eico">📂</div>
+    <h3>No categories yet</h3>
+    <p>Add categories to the database to get started.</p>
+  </div>
+
+  <div class="card-grid" th:unless="${#lists.isEmpty(categories)}">
+    <a class="cat-card" th:each="cat : ${categories}"
+       th:href="@{'/category/' + ${cat.id}}">
+      <div class="cat-icon">📚</div>
+      <div class="cat-title" th:text="${cat.title}">Category</div>
+      <div class="cat-arrow">Start →</div>
+    </a>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,16 +1,18 @@
 package English_Quiz.service;
 
-import English_Quiz.model.Question;
 import English_Quiz.model.Answer;
-import English_Quiz.repository.QuestionRepository;
+import English_Quiz.model.Question;
 import English_Quiz.repository.AnswerRepository;
+import English_Quiz.repository.QuestionRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.util.MultiValueMap;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class QuizService {
+
     private final QuestionRepository questionRepo;
     private final AnswerRepository answerRepo;
 
@@ -21,17 +23,15 @@ public class QuizService {
 
     public List<Question> getQuestions(int levelId) {
         List<Question> questions = questionRepo.findByLevelId(levelId);
-
         for (Question q : questions) {
-            List<Answer> answers = answerRepo.findByQuestionId(q.getId());
-            q.setAnswers(answers);
+            q.setAnswers(answerRepo.findByQuestionId(q.getId()));
         }
         return questions;
     }
 
-    public QuizResult gradeAnswers(Map<String, String> params) {
-        Map<Integer, Integer> submitted = new HashMap<>();
-        for (Map.Entry<String, String> e : params.entrySet()) {
+    public RichResult gradeAnswers(MultiValueMap<String, String> params, int levelId) {
+        Map<Integer, List<Integer>> submitted = new HashMap<>();
+        for (Map.Entry<String, List<String>> e : params.entrySet()) {
             String key = e.getKey();
             if (key == null) continue;
             String lower = key.toLowerCase(Locale.ROOT).trim();
@@ -40,75 +40,80 @@ public class QuizService {
                 if (idPart.matches("\\d+")) {
                     try {
                         int qId = Integer.parseInt(idPart);
-                        int aId = Integer.parseInt(e.getValue());
-                        submitted.put(qId, aId);
-                    } catch (NumberFormatException ex) {
-                    }
+                        List<Integer> answerIds = new ArrayList<>();
+                        for (String v : e.getValue()) {
+                            if (v != null && !v.isBlank()) {
+                                try {
+                                    answerIds.add(Integer.parseInt(v.trim()));
+                                } catch (NumberFormatException ignored) {}
+                            }
+                        }
+                        if (!answerIds.isEmpty()) {
+                            submitted.put(qId, answerIds);
+                        }
+                    } catch (NumberFormatException ignored) {}
                 }
             }
         }
 
-        if (submitted.isEmpty()) {
-            return new QuizResult(0, 0, Collections.emptyMap());
+        List<Question> questions = questionRepo.findByLevelId(levelId);
+        for (Question q : questions) {
+            q.setAnswers(answerRepo.findByQuestionId(q.getId()));
         }
-        List<Integer> qIds = new ArrayList<>(submitted.keySet());
-        List<Question> questions = questionRepo.findAllById(qIds);
 
-        int total = questions.size();
         int score = 0;
-        Map<Integer, Boolean> details = new LinkedHashMap<>();
+        int total = questions.size();
+        List<ResultItem> items = new ArrayList<>();
 
         for (Question q : questions) {
             int qId = q.getId();
-            Integer chosenAnswerId = submitted.get(qId);
-            List<Answer> answers = q.getAnswers();
-            if (answers == null || answers.isEmpty()) {
-                answers = answerRepo.findByQuestionId(qId);
-            }
+            List<Integer> chosenIds = submitted.getOrDefault(qId, Collections.emptyList());
+            List<Answer> answers = q.getAnswers() == null ? Collections.emptyList() : q.getAnswers();
 
-            List<Answer> correctAnswers = answers.stream()
+            Set<Integer> correctSet = answers.stream()
                     .filter(Answer::isCorrect)
-                    .collect(Collectors.toList());
+                    .map(Answer::getId)
+                    .collect(Collectors.toSet());
 
-            boolean correct = false;
-            if (chosenAnswerId != null) {
-                for (Answer a : correctAnswers) {
-                    if (a.getId() == chosenAnswerId) {
-                        correct = true;
-                        break;
-                    }
-                }
-            } else {
-                correct = false;
-            }
-
+            Set<Integer> chosenSet = new HashSet<>(chosenIds);
+            boolean correct = !correctSet.isEmpty() && correctSet.equals(chosenSet);
             if (correct) score++;
-            details.put(qId, correct);
+
+            items.add(new ResultItem(q, chosenIds, correct));
         }
 
-        return new QuizResult(score, total, details);
+        return new RichResult(score, total, items);
     }
-    public static class QuizResult {
+
+    public static class ResultItem {
+        private final Question question;
+        private final List<Integer> chosenIds;
+        private final boolean correct;
+
+        public ResultItem(Question question, List<Integer> chosenIds, boolean correct) {
+            this.question = question;
+            this.chosenIds = chosenIds;
+            this.correct = correct;
+        }
+
+        public Question getQuestion() { return question; }
+        public List<Integer> getChosenIds() { return chosenIds; }
+        public boolean isCorrect() { return correct; }
+    }
+
+    public static class RichResult {
         private final int score;
         private final int total;
-        private final Map<Integer, Boolean> details;
+        private final List<ResultItem> items;
 
-        public QuizResult(int score, int total, Map<Integer, Boolean> details) {
+        public RichResult(int score, int total, List<ResultItem> items) {
             this.score = score;
             this.total = total;
-            this.details = details;
+            this.items = items;
         }
 
-        public int getScore() {
-            return score;
-        }
-
-        public int getTotal() {
-            return total;
-        }
-
-        public Map<Integer, Boolean> getDetails() {
-            return details;
-        }
+        public int getScore() { return score; }
+        public int getTotal() { return total; }
+        public List<ResultItem> getItems() { return items; }
     }
 }
