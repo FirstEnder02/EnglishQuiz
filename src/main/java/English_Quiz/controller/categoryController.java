@@ -12,9 +12,10 @@ public class CategoryController {
     public CategoryController(CategoryRepository categoryRepo) {
         this.categoryRepo = categoryRepo;
     }
+
     @GetMapping("/")
     public String index(Model model) {
         model.addAttribute("categories", categoryRepo.findAll());
-        return "index";
+        return "categories";
     }
 }
