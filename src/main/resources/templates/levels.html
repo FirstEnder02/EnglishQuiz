@@ -22,17 +22,17 @@
   <h1 class="page-title">Choose a Level</h1>
   <p class="page-sub">Levels range from 1 (beginner) to 15 (advanced). Level 10+ is above average English skill.</p>
 
-  <div th:if="${#iterables.size(levels) == 0}" class="empty-box">
+  <div th:if="${levels == null or #lists.isEmpty(levels)}" class="empty-box">
     <div class="eico">🎯</div>
     <h3>No levels yet</h3>
     <p>No levels have been added for this category.</p>
     <a class="btn btn-ghost" style="margin-top:16px" th:href="@{/}">← Back to Categories</a>
   </div>
 
-  <div class="level-grid" th:if="${#iterables.size(levels) > 0}">
+  <div class="level-grid" th:if="${levels != null and !#lists.isEmpty(levels)}">
     <a class="level-badge" th:each="lv : ${levels}"
        th:href="@{'/quiz/' + ${lv.id}}">
-      <span class="level-num" th:text="${lv.level}">1</span>
+      <span class="level-num" th:text="${lv.levelName}">1</span>
       <span class="level-lbl">Level</span>
     </a>
   </div>
