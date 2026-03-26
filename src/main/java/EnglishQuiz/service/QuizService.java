@@ -1,11 +1,11 @@
 package EnglishQuiz.service;
 
+import EnglishQuiz.dto.QuizSession;
 import EnglishQuiz.model.Answer;
 import EnglishQuiz.model.Question;
 import EnglishQuiz.repository.AnswerRepository;
 import EnglishQuiz.repository.QuestionRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.util.MultiValueMap;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -29,36 +29,23 @@ public class QuizService {
         return questions;
     }
 
-    public RichResult gradeAnswers(MultiValueMap<String, String> params, int levelId) {
-        Map<Integer, List<Integer>> submitted = new HashMap<>();
-        for (Map.Entry<String, List<String>> e : params.entrySet()) {
-            String key = e.getKey();
-            if (key == null) continue;
-            String lower = key.toLowerCase(Locale.ROOT).trim();
-            if (lower.startsWith("q")) {
-                String idPart = lower.substring(1);
-                if (idPart.matches("\\d+")) {
-                    try {
-                        int qId = Integer.parseInt(idPart);
-                        List<Integer> answerIds = new ArrayList<>();
-                        for (String v : e.getValue()) {
-                            if (v != null && !v.isBlank()) {
-                                try {
-                                    answerIds.add(Integer.parseInt(v.trim()));
-                                } catch (NumberFormatException ignored) {}
-                            }
-                        }
-                        if (!answerIds.isEmpty()) {
-                            submitted.put(qId, answerIds);
-                        }
-                    } catch (NumberFormatException ignored) {}
-                }
-            }
-        }
-
-        List<Question> questions = questionRepo.findByLevelId(levelId);
-        for (Question q : questions) {
+    public Question getQuestionById(int questionId) {
+        Optional<Question> opt = questionRepo.findById(questionId);
+        if (opt.isPresent()) {
+            Question q = opt.get();
             q.setAnswers(answerRepo.findByQuestionId(q.getId()));
+            return q;
+        }
+        return null;
+    }
+
+    public RichResult gradeAnswers(QuizSession quizSession) {
+        List<Question> questions = new ArrayList<>();
+        for (Integer qId : quizSession.getQuestionIds()) {
+            Question q = getQuestionById(qId);
+            if (q != null) {
+                questions.add(q);
+            }
         }
 
         int score = 0;
@@ -67,8 +54,10 @@ public class QuizService {
 
         for (Question q : questions) {
             int qId = q.getId();
-            List<Integer> chosenIds = submitted.getOrDefault(qId, Collections.emptyList());
-            List<Answer> answers = q.getAnswers() == null ? Collections.emptyList() : q.getAnswers();
+            List<Integer> chosenIds = quizSession.getAnswers()
+                .getOrDefault(qId, Collections.emptyList());
+            List<Answer> answers = q.getAnswers() == null ? 
+                Collections.emptyList() : q.getAnswers();
 
             Set<Integer> correctSet = answers.stream()
                     .filter(Answer::isCorrect)

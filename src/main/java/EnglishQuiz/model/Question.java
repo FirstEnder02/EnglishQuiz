@@ -1,5 +1,6 @@
 package EnglishQuiz.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
@@ -14,10 +15,15 @@ import java.util.List;
 public class Question {
     @Id
     private Integer id;
+    
+    @Column(name = "level_id")
     private Integer levelId;
+    
     private String title;
     private String explaination;
     private String type;
+    
+    @Column(name = "media_url")
     private String mediaUrl;
 
     @Transient

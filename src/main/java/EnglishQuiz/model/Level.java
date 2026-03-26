@@ -6,11 +6,14 @@ import jakarta.persistence.Table;
 import lombok.Data;
 @Entity
 @Data
-@Table(name = "quiz_level")
+@Table(name = "level")
 public class Level {
     @Id
     private Integer id;
+    
+    @Column(name = "category_id")
     private Integer categoryId;
+    
     @Column(name = "level_name")
     private String levelName;
 }

@@ -1,16 +1,9 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
-<head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>English Quiz — Result</title>
-  <link rel="stylesheet" th:href="@{/css/style.css}"/>
-</head>
+<head th:replace="~{_layout :: head('Result')}"></head>
 <body>
 
-<nav class="navbar">
-  <a class="navbar-brand" th:href="@{/}">English<em>Quiz</em></a>
-</nav>
+<nav th:replace="~{_layout :: navbar}"></nav>
 
 <div class="page-wrapper">
   <div class="breadcrumb">
@@ -27,9 +20,14 @@
         <span class="big" th:text="${score}">0</span>
         <span class="sub" th:text="'/ ' + ${total}">/ 0</span>
       </div>
-      <h1 th:text="${score == total} ? 'Perfect Score! 🎉' :
-                   (score >= total / 2 ? 'Good Job! 👍' : 'Keep Practising 💪')">Result</h1>
-      <p class="sub-msg" th:text="${score} + ' correct out of ' + ${total} + ' questions'"></p>
+      <h1 th:if="${score == total}">Perfect Score!</h1>
+      <h1 th:if="${score < total and score >= total / 2}">Good Job!</h1>
+      <h1 th:if="${score < total / 2}">Keep Practising</h1>
+      <p class="sub-msg">
+        <span th:text="${score}">0</span> correct out of <span th:text="${total}">0</span> 
+        <span th:text="${total == 1 ? 'question' : 'questions'}">questions</span>
+        <span th:if="${score == total}"> - You aced it!</span>
+      </p>
     </div>
 
     <!-- Per-question breakdown -->
@@ -39,34 +37,39 @@
 
         <!-- Question row -->
         <div class="r-q-row">
-          <div th:class="${item.correct} ? 'r-num c' :
-                          (item.chosenIds.isEmpty() ? 'r-num s' : 'r-num w')"
-               th:text="${iStat.index + 1}">1</div>
+          <div th:if="${item.correct}" class="r-num c" th:text="${iStat.index + 1}" th:title="'Correct'">1</div>
+          <div th:if="${!item.correct and item.chosenIds.isEmpty()}" class="r-num s" th:text="${iStat.index + 1}" th:title="'Skipped'">1</div>
+          <div th:if="${!item.correct and !item.chosenIds.isEmpty()}" class="r-num w" th:text="${iStat.index + 1}" th:title="'Wrong'">1</div>
           <p class="r-title" th:text="${item.question.title}">Question title</p>
         </div>
 
         <!-- Image -->
-        <div class="r-image" th:if="${item.question.mediaUrl != null and !item.question.mediaUrl.isEmpty()}">
-          <img th:src="${item.question.mediaUrl}" alt="Question image" loading="lazy"/>
+        <div class="r-image" th:if="${item.question.mediaUrl != null and !#strings.isEmpty(item.question.mediaUrl)}">
+          <img th:src="${item.question.mediaUrl}" th:alt="'Image for question ' + ${iStat.index + 1}" loading="lazy"/>
         </div>
 
         <!-- Answers -->
         <div class="r-answers">
           <div th:each="ans : ${item.question.answers}">
-            <div th:with="
-                  wasChosen=${item.chosenIds.contains(ans.id)},
-                  isCorrect=${ans.correct}">
-              <div th:class="${isCorrect and wasChosen} ? 'r-ans ca' :
-                              (wasChosen and !isCorrect) ? 'r-ans cw' :
-                              (isCorrect and !wasChosen) ? 'r-ans ca' : 'r-ans neu'">
+            <div th:with="wasChosen=${item.chosenIds.contains(ans.id)}, isCorrect=${ans.isCorrect}">
+              <div th:if="${isCorrect and wasChosen}" class="r-ans ca">
                 <span class="al" th:text="${ans.label}">A</span>
                 <span th:text="${ans.text}">Answer text</span>
-                <span class="ai"
-                      th:if="${isCorrect and wasChosen}">✓</span>
-                <span class="ai"
-                      th:if="${wasChosen and !isCorrect}">✗</span>
-                <span class="ai"
-                      th:if="${isCorrect and !wasChosen}">← correct</span>
+                <span class="ai">Correct</span>
+              </div>
+              <div th:if="${wasChosen and !isCorrect}" class="r-ans cw">
+                <span class="al" th:text="${ans.label}">A</span>
+                <span th:text="${ans.text}">Answer text</span>
+                <span class="ai">Wrong</span>
+              </div>
+              <div th:if="${isCorrect and !wasChosen}" class="r-ans ca">
+                <span class="al" th:text="${ans.label}">A</span>
+                <span th:text="${ans.text}">Answer text</span>
+                <span class="ai">Correct answer</span>
+              </div>
+              <div th:if="${!isCorrect and !wasChosen}" class="r-ans neu">
+                <span class="al" th:text="${ans.label}">A</span>
+                <span th:text="${ans.text}">Answer text</span>
               </div>
             </div>
           </div>
@@ -74,8 +77,8 @@
 
         <!-- Explanation -->
         <div class="r-exp"
-             th:if="${item.question.explaination != null and !item.question.explaination.isEmpty()}">
-          <strong>Explanation: </strong>
+             th:if="${item.question.explaination != null and !#strings.isEmpty(item.question.explaination)}">
+          <strong>Explanation:</strong>
           <span th:text="${item.question.explaination}"></span>
         </div>
 
@@ -84,7 +87,7 @@
 
     <!-- Footer actions -->
     <div class="result-footer">
-      <a class="btn btn-ghost" th:href="@{/}">← Back to Categories</a>
+      <a class="btn btn-ghost" th:href="@{/}">Back to Categories</a>
       <a class="btn btn-primary" th:href="@{/}">Try Another Quiz</a>
     </div>
 

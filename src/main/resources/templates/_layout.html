@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+
+<head th:fragment="head(title)">
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title th:text="${title} ? ${title} + ' — English Quiz' : 'English Quiz'">English Quiz</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+
+<body>
+
+<nav th:fragment="navbar" class="navbar">
+  <a class="navbar-brand" th:href="@{/}">English<em>Quiz</em></a>
+</nav>
+
+<div th:fragment="breadcrumb(items)" class="breadcrumb">
+  <th:block th:each="item, iterStat : ${items}">
+    <a th:if="${item.url != null}" th:href="${item.url}" th:text="${item.label}">Link</a>
+    <span th:if="${item.url == null}" th:text="${item.label}">Current</span>
+    <span th:if="${!iterStat.last}" class="bc-sep">›</span>
+  </th:block>
+</div>
+
+</body>
+</html>
