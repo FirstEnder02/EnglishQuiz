@@ -40,7 +40,7 @@
         </div>
       </div>
 
-      <a class="btn btn-ghost btn-sm" th:href="@{'/category/' + ${quizSession.levelId}}" style="margin-top: 4px;">
+      <a class="btn btn-ghost btn-sm" th:href="@{'/levels/' + ${quizSession.categoryId}}" style="margin-top: 4px;">
         ← Exit Quiz
       </a>
     </aside>
@@ -93,11 +93,12 @@
                     value="next"
                     class="btn btn-primary btn-sm">Next →</button>
 
-            <button th:if="${isLastQuestion}"
+            <button
                     type="submit"
                     name="action"
                     value="submit"
-                    class="btn btn-primary btn-sm">Submit Quiz</button>
+                    class="btn btn-ghost btn-sm"
+                    th:text="${isLastQuestion} ? 'Submit Quiz' : 'Finish Now'">Submit Quiz</button>
           </div>
         </section>
       </form>

@@ -3,6 +3,7 @@ package EnglishQuiz.dto;
 import java.util.*;
 
 public class QuizSession {
+    private int categoryId;
     private int levelId;
     private List<Integer> questionIds;
     private int currentIndex;
@@ -13,6 +14,9 @@ public class QuizSession {
         this.answers = new HashMap<>();
         this.currentIndex = 0;
     }
+
+    public int getCategoryId() { return categoryId; }
+    public void setCategoryId(int categoryId) { this.categoryId = categoryId; }
 
     public int getLevelId() { return levelId; }
     public void setLevelId(int levelId) { this.levelId = levelId; }

@@ -24,7 +24,7 @@
   <div th:if="${levels != null and !#lists.isEmpty(levels)}">
     <div class="level-grid">
       <a class="level-badge" th:each="lv : ${levels}"
-         th:href="@{'/quiz/' + ${lv.id}}"
+         th:href="@{'/quiz/' + ${lv.categoryId} + '/' + ${lv.id}}"
          th:attr="data-level-id=${lv.id}"
          th:title="'Start Level ' + ${lv.levelName}">
         <span class="level-num" th:text="${lv.levelName}">1</span>

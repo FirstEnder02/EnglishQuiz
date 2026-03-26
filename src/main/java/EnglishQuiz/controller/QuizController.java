@@ -1,7 +1,9 @@
 package EnglishQuiz.controller;
 
 import EnglishQuiz.dto.QuizSession;
+import EnglishQuiz.model.Level;
 import EnglishQuiz.model.Question;
+import EnglishQuiz.repository.LevelRepository;
 import EnglishQuiz.service.QuizService;
 import EnglishQuiz.service.QuizService.RichResult;
 import jakarta.servlet.http.HttpSession;
@@ -17,21 +19,42 @@ import java.util.stream.Collectors;
 public class QuizController {
 
     private final QuizService quizService;
+    private final LevelRepository levelRepository;
 
-    public QuizController(QuizService quizService) {
+    public QuizController(QuizService quizService, LevelRepository levelRepository) {
         this.quizService = quizService;
+        this.levelRepository = levelRepository;
     }
 
     @GetMapping("/quiz/{levelId}")
     public String startQuiz(@PathVariable int levelId, HttpSession session, Model model) {
+        Level level = levelRepository.findById(levelId).orElse(null);
+        if (level == null || level.getCategoryId() == null) {
+            return "redirect:/";
+        }
+        return startQuiz(level.getCategoryId(), levelId, session, model);
+    }
+
+    @GetMapping("/quiz/{categoryId}/{levelId}")
+    public String startQuiz(@PathVariable int categoryId, @PathVariable int levelId, HttpSession session, Model model) {
+        Level level = levelRepository.findById(levelId).orElse(null);
+        if (level == null || level.getCategoryId() == null) {
+            return "redirect:/";
+        }
+        int resolvedCategoryId = level.getCategoryId();
+        if (categoryId != resolvedCategoryId) {
+            return "redirect:/quiz/" + resolvedCategoryId + "/" + levelId;
+        }
+
         List<Question> questions = quizService.getQuestions(levelId);
         
         if (questions == null || questions.isEmpty()) {
             model.addAttribute("error", "No questions found for this level");
-            return "redirect:/";
+            return "redirect:/levels/" + resolvedCategoryId;
         }
         
         QuizSession quizSession = new QuizSession();
+        quizSession.setCategoryId(resolvedCategoryId);
         quizSession.setLevelId(levelId);
         quizSession.setQuestionIds(questions.stream()
             .map(Question::getId)
@@ -47,6 +70,12 @@ public class QuizController {
         QuizSession quizSession = (QuizSession) session.getAttribute("quizSession");
         if (quizSession == null || quizSession.getQuestionIds().isEmpty()) {
             return "redirect:/";
+        }
+        if (quizSession.getCategoryId() <= 0) {
+            Level level = levelRepository.findById(quizSession.getLevelId()).orElse(null);
+            if (level != null && level.getCategoryId() != null) {
+                quizSession.setCategoryId(level.getCategoryId());
+            }
         }
 
         int currentIndex = quizSession.getCurrentIndex();
@@ -115,6 +144,9 @@ public class QuizController {
         QuizSession quizSession = (QuizSession) session.getAttribute("quizSession");
         if (quizSession == null) {
             return "redirect:/";
+        }
+        for (Integer questionId : quizSession.getQuestionIds()) {
+            quizSession.getAnswers().putIfAbsent(questionId, new ArrayList<>());
         }
 
         RichResult result = quizService.gradeAnswers(quizSession);
