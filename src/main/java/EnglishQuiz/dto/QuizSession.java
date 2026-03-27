@@ -8,6 +8,7 @@ public class QuizSession {
     private List<Integer> questionIds;
     private int currentIndex;
     private Map<Integer, List<Integer>> answers;
+    private boolean submitted;
 
     public QuizSession() {
         this.questionIds = new ArrayList<>();
@@ -29,6 +30,9 @@ public class QuizSession {
 
     public Map<Integer, List<Integer>> getAnswers() { return answers; }
     public void setAnswers(Map<Integer, List<Integer>> answers) { this.answers = answers; }
+
+    public boolean isSubmitted() { return submitted; }
+    public void setSubmitted(boolean submitted) { this.submitted = submitted; }
 
     public int getTotalQuestions() { return questionIds.size(); }
     

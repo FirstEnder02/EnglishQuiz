@@ -87,6 +87,11 @@
 
     <!-- Footer actions -->
     <div class="result-footer">
+      <form th:action="@{/quiz/reset}" method="post">
+        <input type="hidden" name="categoryId" th:value="${categoryId}"/>
+        <input type="hidden" name="levelId" th:value="${levelId}"/>
+        <button type="submit" class="btn btn-primary">Reset & Retry This Quiz</button>
+      </form>
       <a class="btn btn-ghost" th:href="@{/}">Back to Categories</a>
       <a class="btn btn-primary" th:href="@{/}">Try Another Quiz</a>
     </div>

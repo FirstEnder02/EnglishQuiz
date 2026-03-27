@@ -2,9 +2,14 @@ package EnglishQuiz.controller;
 
 import EnglishQuiz.model.Role;
 import EnglishQuiz.model.UserAccount;
+import EnglishQuiz.model.RememberLoginToken;
 
+import EnglishQuiz.repository.RememberLoginTokenRepository;
 import EnglishQuiz.repository.RoleRepository;
 import EnglishQuiz.repository.UserAccountRepository;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +20,8 @@ import org.springframework.security.crypto.bcrypt.BCrypt;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Controller
 public class AuthController {
@@ -22,13 +29,19 @@ public class AuthController {
     public static final String SESSION_ROLE_KEY = "currentUserRole";
     public static final String ROLE_ADMIN = "ADMIN";
     public static final String ROLE_USER = "USER";
+    public static final String REMEMBER_ME_COOKIE = "remember_login_token";
+    private static final int REMEMBER_ME_DAYS = 30;
 
     private final UserAccountRepository userAccountRepository;
     private final RoleRepository roleRepository;
+    private final RememberLoginTokenRepository rememberLoginTokenRepository;
 
-    public AuthController(UserAccountRepository userAccountRepository, RoleRepository roleRepository) {
+    public AuthController(UserAccountRepository userAccountRepository,
+                          RoleRepository roleRepository,
+                          RememberLoginTokenRepository rememberLoginTokenRepository) {
         this.userAccountRepository = userAccountRepository;
         this.roleRepository = roleRepository;
+        this.rememberLoginTokenRepository = rememberLoginTokenRepository;
     }
 
     @GetMapping("/login")
@@ -42,7 +55,10 @@ public class AuthController {
     @PostMapping("/login")
     public String login(@RequestParam String username,
                         @RequestParam String password,
+                        @RequestParam(required = false, defaultValue = "false") boolean rememberMe,
                         @RequestParam(required = false) String redirect,
+                        HttpServletRequest request,
+                        HttpServletResponse response,
                         HttpSession session,
                         RedirectAttributes redirectAttributes) {
         String normalizedUsername = username == null ? "" : username.trim();
@@ -59,6 +75,7 @@ public class AuthController {
 
         session.setAttribute(SESSION_USER_KEY, user.getUsername());
         session.setAttribute(SESSION_ROLE_KEY, resolveRoleName(user.getRoleId()));
+        handleRememberMe(user.getUsername(), rememberMe, request, response);
         redirectAttributes.addFlashAttribute("success", "Login successful.");
         if (isSafeLocalRedirect(redirect)) {
             return "redirect:" + redirect;
@@ -111,7 +128,13 @@ public class AuthController {
     }
 
     @GetMapping("/logout")
-    public String logout(HttpSession session) {
+    public String logout(HttpServletRequest request, HttpServletResponse response, HttpSession session) {
+        String token = extractCookieValue(request, REMEMBER_ME_COOKIE);
+        if (token != null && !token.isBlank()) {
+            rememberLoginTokenRepository.findByToken(token)
+                    .ifPresent(rememberLoginTokenRepository::delete);
+        }
+        clearRememberCookie(response);
         session.invalidate();
         return "redirect:/login";
     }
@@ -164,5 +187,51 @@ public class AuthController {
         return roleRepository.findById(roleId)
                 .map(r -> normalizeRole(r.getName()))
                 .orElse(ROLE_USER);
+    }
+
+    private void handleRememberMe(String username, boolean rememberMe, HttpServletRequest request, HttpServletResponse response) {
+        String oldToken = extractCookieValue(request, REMEMBER_ME_COOKIE);
+        if (oldToken != null && !oldToken.isBlank()) {
+            rememberLoginTokenRepository.findByToken(oldToken)
+                    .ifPresent(rememberLoginTokenRepository::delete);
+        }
+        if (!rememberMe) {
+            clearRememberCookie(response);
+            return;
+        }
+
+        String token = UUID.randomUUID().toString() + "-" + UUID.randomUUID();
+        RememberLoginToken rememberToken = new RememberLoginToken();
+        rememberToken.setUsername(username);
+        rememberToken.setToken(token);
+        rememberToken.setExpiresAt(LocalDateTime.now().plusDays(REMEMBER_ME_DAYS));
+        rememberLoginTokenRepository.save(rememberToken);
+
+        Cookie cookie = new Cookie(REMEMBER_ME_COOKIE, token);
+        cookie.setHttpOnly(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(REMEMBER_ME_DAYS * 24 * 60 * 60);
+        response.addCookie(cookie);
+    }
+
+    private void clearRememberCookie(HttpServletResponse response) {
+        Cookie cookie = new Cookie(REMEMBER_ME_COOKIE, "");
+        cookie.setHttpOnly(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
+    }
+
+    private String extractCookieValue(HttpServletRequest request, String name) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) {
+            return null;
+        }
+        for (Cookie cookie : cookies) {
+            if (name.equals(cookie.getName())) {
+                return cookie.getValue();
+            }
+        }
+        return null;
     }
 }

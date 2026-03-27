@@ -4,6 +4,7 @@ import EnglishQuiz.dto.QuizSession;
 import EnglishQuiz.model.Level;
 import EnglishQuiz.model.Question;
 import EnglishQuiz.repository.LevelRepository;
+import EnglishQuiz.service.QuizProgressService;
 import EnglishQuiz.service.QuizService;
 import EnglishQuiz.service.QuizService.RichResult;
 import jakarta.servlet.http.HttpSession;
@@ -17,13 +18,18 @@ import java.util.stream.Collectors;
 
 @Controller
 public class QuizController {
+    private static final String ACTIVE_QUIZ_SESSION_KEY = "quizSession";
 
     private final QuizService quizService;
     private final LevelRepository levelRepository;
+    private final QuizProgressService quizProgressService;
 
-    public QuizController(QuizService quizService, LevelRepository levelRepository) {
+    public QuizController(QuizService quizService,
+                          LevelRepository levelRepository,
+                          QuizProgressService quizProgressService) {
         this.quizService = quizService;
         this.levelRepository = levelRepository;
+        this.quizProgressService = quizProgressService;
     }
 
     @GetMapping("/quiz/{levelId}")
@@ -46,6 +52,15 @@ public class QuizController {
             return "redirect:/quiz/" + resolvedCategoryId + "/" + levelId;
         }
 
+        String username = getCurrentUsername(session);
+        if (username != null) {
+            QuizSession savedSession = quizProgressService.load(username, resolvedCategoryId, levelId).orElse(null);
+            if (savedSession != null && !savedSession.getQuestionIds().isEmpty()) {
+                session.setAttribute(ACTIVE_QUIZ_SESSION_KEY, savedSession);
+                return savedSession.isSubmitted() ? "redirect:/quiz/result" : "redirect:/quiz/question";
+            }
+        }
+
         List<Question> questions = quizService.getQuestions(levelId);
         
         if (questions == null || questions.isEmpty()) {
@@ -61,15 +76,19 @@ public class QuizController {
             .collect(Collectors.toList()));
         quizSession.setCurrentIndex(0);
         
-        session.setAttribute("quizSession", quizSession);
+        session.setAttribute(ACTIVE_QUIZ_SESSION_KEY, quizSession);
+        persistProgress(session, quizSession);
         return "redirect:/quiz/question";
     }
 
     @GetMapping("/quiz/question")
     public String showQuestion(HttpSession session, Model model) {
-        QuizSession quizSession = (QuizSession) session.getAttribute("quizSession");
+        QuizSession quizSession = (QuizSession) session.getAttribute(ACTIVE_QUIZ_SESSION_KEY);
         if (quizSession == null || quizSession.getQuestionIds().isEmpty()) {
             return "redirect:/";
+        }
+        if (quizSession.isSubmitted()) {
+            return "redirect:/quiz/result";
         }
         if (quizSession.getCategoryId() <= 0) {
             Level level = levelRepository.findById(quizSession.getLevelId()).orElse(null);
@@ -104,9 +123,12 @@ public class QuizController {
     public String saveAnswer(@RequestParam(required = false) List<Integer> answerIds,
                            @RequestParam String action,
                            HttpSession session) {
-        QuizSession quizSession = (QuizSession) session.getAttribute("quizSession");
+        QuizSession quizSession = (QuizSession) session.getAttribute(ACTIVE_QUIZ_SESSION_KEY);
         if (quizSession == null) {
             return "redirect:/";
+        }
+        if (quizSession.isSubmitted()) {
+            return "redirect:/quiz/result";
         }
 
         int currentIndex = quizSession.getCurrentIndex();
@@ -120,11 +142,15 @@ public class QuizController {
 
         if ("next".equals(action) && currentIndex < quizSession.getTotalQuestions() - 1) {
             quizSession.setCurrentIndex(currentIndex + 1);
+            persistProgress(session, quizSession);
             return "redirect:/quiz/question";
         } else if ("previous".equals(action) && currentIndex > 0) {
             quizSession.setCurrentIndex(currentIndex - 1);
+            persistProgress(session, quizSession);
             return "redirect:/quiz/question";
         } else if ("submit".equals(action)) {
+            quizSession.setSubmitted(true);
+            persistProgress(session, quizSession);
             return "redirect:/quiz/result";
         } else if (action.startsWith("goto-")) {
             try {
@@ -133,28 +159,67 @@ public class QuizController {
                     quizSession.setCurrentIndex(targetIndex);
                 }
             } catch (NumberFormatException ignored) {}
+            persistProgress(session, quizSession);
             return "redirect:/quiz/question";
         }
 
+        persistProgress(session, quizSession);
         return "redirect:/quiz/question";
     }
 
     @GetMapping("/quiz/result")
     public String showResult(HttpSession session, Model model) {
-        QuizSession quizSession = (QuizSession) session.getAttribute("quizSession");
+        QuizSession quizSession = (QuizSession) session.getAttribute(ACTIVE_QUIZ_SESSION_KEY);
         if (quizSession == null) {
             return "redirect:/";
         }
         for (Integer questionId : quizSession.getQuestionIds()) {
             quizSession.getAnswers().putIfAbsent(questionId, new ArrayList<>());
         }
+        quizSession.setSubmitted(true);
+        persistProgress(session, quizSession);
 
         RichResult result = quizService.gradeAnswers(quizSession);
         model.addAttribute("result", result);
         model.addAttribute("score", result.getScore());
         model.addAttribute("total", result.getTotal());
-        
-        session.removeAttribute("quizSession");
+        model.addAttribute("categoryId", quizSession.getCategoryId());
+        model.addAttribute("levelId", quizSession.getLevelId());
         return "result";
+    }
+
+    @PostMapping("/quiz/reset")
+    public String resetQuiz(@RequestParam(required = false) Integer categoryId,
+                            @RequestParam(required = false) Integer levelId,
+                            HttpSession session) {
+        if (categoryId == null || levelId == null || categoryId <= 0 || levelId <= 0) {
+            session.removeAttribute(ACTIVE_QUIZ_SESSION_KEY);
+            return "redirect:/";
+        }
+        String username = getCurrentUsername(session);
+        if (username != null) {
+            quizProgressService.delete(username, categoryId, levelId);
+        }
+
+        QuizSession activeSession = (QuizSession) session.getAttribute(ACTIVE_QUIZ_SESSION_KEY);
+        if (activeSession != null && activeSession.getCategoryId() == categoryId && activeSession.getLevelId() == levelId) {
+            session.removeAttribute(ACTIVE_QUIZ_SESSION_KEY);
+        }
+        return "redirect:/quiz/" + categoryId + "/" + levelId;
+    }
+
+    private void persistProgress(HttpSession session, QuizSession quizSession) {
+        String username = getCurrentUsername(session);
+        if (username != null) {
+            quizProgressService.save(username, quizSession);
+        }
+    }
+
+    private String getCurrentUsername(HttpSession session) {
+        Object value = session.getAttribute(AuthController.SESSION_USER_KEY);
+        if (value instanceof String username && !username.isBlank()) {
+            return username;
+        }
+        return null;
     }
 }

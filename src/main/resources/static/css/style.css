@@ -563,6 +563,9 @@ button { cursor: pointer; font-family: inherit; }
   border-top: 1.5px solid var(--bg-light);
   flex-wrap: wrap;
 }
+.result-footer form {
+  display: inline-flex;
+}
 
 /* ─── Demo page ─────────────────────────────────────────── */
 .demo-section { max-width: 800px; }
@@ -647,6 +650,24 @@ button { cursor: pointer; font-family: inherit; }
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+.remember-row {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  margin-top: .35rem;
+  width: fit-content;
+  color: var(--ink-2);
+  font-size: .88rem;
+  cursor: pointer;
+}
+.remember-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  padding: 0;
+  border-radius: 4px;
+  accent-color: var(--accent);
 }
 .auth-form .btn {
   margin-top: .8rem;
@@ -764,6 +785,11 @@ button { cursor: pointer; font-family: inherit; }
 }
 
 .site-footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 90;
   border-top: 1px solid var(--bg-light);
   background: #f2efff;
 }
@@ -776,6 +802,10 @@ button { cursor: pointer; font-family: inherit; }
   gap: 1rem;
   color: var(--ink-2);
   font-size: .85rem;
+}
+
+body {
+  padding-bottom: 64px;
 }
 
 /* ─── Admin management ──────────────────────────────────── */
