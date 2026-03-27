@@ -7,14 +7,18 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
     private final AuthInterceptor authInterceptor;
+    private final AdminInterceptor adminInterceptor;
 
-    public WebConfig(AuthInterceptor authInterceptor) {
+    public WebConfig(AuthInterceptor authInterceptor, AdminInterceptor adminInterceptor) {
         this.authInterceptor = authInterceptor;
+        this.adminInterceptor = adminInterceptor;
     }
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(authInterceptor)
                 .addPathPatterns("/quiz/**");
+        registry.addInterceptor(adminInterceptor)
+                .addPathPatterns("/admin/**");
     }
 }

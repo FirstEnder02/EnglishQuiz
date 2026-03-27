@@ -24,6 +24,9 @@ public class UserAccount {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "role_id")
+    private Integer roleId;
+
     @PrePersist
     public void onCreate() {
         this.createdAt = LocalDateTime.now();

@@ -1,6 +1,9 @@
 package EnglishQuiz.controller;
 
+import EnglishQuiz.model.Role;
 import EnglishQuiz.model.UserAccount;
+
+import EnglishQuiz.repository.RoleRepository;
 import EnglishQuiz.repository.UserAccountRepository;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
@@ -16,11 +19,16 @@ import java.nio.charset.StandardCharsets;
 @Controller
 public class AuthController {
     public static final String SESSION_USER_KEY = "currentUsername";
+    public static final String SESSION_ROLE_KEY = "currentUserRole";
+    public static final String ROLE_ADMIN = "ADMIN";
+    public static final String ROLE_USER = "USER";
 
     private final UserAccountRepository userAccountRepository;
+    private final RoleRepository roleRepository;
 
-    public AuthController(UserAccountRepository userAccountRepository) {
+    public AuthController(UserAccountRepository userAccountRepository, RoleRepository roleRepository) {
         this.userAccountRepository = userAccountRepository;
+        this.roleRepository = roleRepository;
     }
 
     @GetMapping("/login")
@@ -50,6 +58,7 @@ public class AuthController {
         }
 
         session.setAttribute(SESSION_USER_KEY, user.getUsername());
+        session.setAttribute(SESSION_ROLE_KEY, resolveRoleName(user.getRoleId()));
         redirectAttributes.addFlashAttribute("success", "Login successful.");
         if (isSafeLocalRedirect(redirect)) {
             return "redirect:" + redirect;
@@ -92,9 +101,11 @@ public class AuthController {
         UserAccount account = new UserAccount();
         account.setUsername(normalizedUsername);
         account.setPasswordHash(BCrypt.hashpw(password, BCrypt.gensalt()));
+        account.setRoleId(resolveDefaultUserRoleId());
         userAccountRepository.save(account);
 
         session.setAttribute(SESSION_USER_KEY, account.getUsername());
+        session.setAttribute(SESSION_ROLE_KEY, resolveRoleName(account.getRoleId()));
         redirectAttributes.addFlashAttribute("success", "Account created and logged in.");
         return "redirect:/";
     }
@@ -123,5 +134,35 @@ public class AuthController {
             return "redirect:/login?redirect=" + encoded;
         }
         return "redirect:/login";
+    }
+
+    private String normalizeRole(String role) {
+        if (role == null || role.isBlank()) {
+            return ROLE_USER;
+        }
+        String normalized = role.trim().toUpperCase();
+        if (ROLE_ADMIN.equals(normalized)) {
+            return ROLE_ADMIN;
+        }
+        return ROLE_USER;
+    }
+
+    private Integer resolveDefaultUserRoleId() {
+        return roleRepository.findByNameIgnoreCase(ROLE_USER)
+                .map(Role::getId)
+                .orElseGet(() -> {
+                    Role role = new Role();
+                    role.setName(ROLE_USER);
+                    return roleRepository.save(role).getId();
+                });
+    }
+
+    private String resolveRoleName(Integer roleId) {
+        if (roleId == null) {
+            return ROLE_USER;
+        }
+        return roleRepository.findById(roleId)
+                .map(r -> normalizeRole(r.getName()))
+                .orElse(ROLE_USER);
     }
 }

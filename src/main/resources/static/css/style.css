@@ -175,6 +175,13 @@ button { cursor: pointer; font-family: inherit; }
 
 .btn-sm { padding: .45rem 1rem; font-size: .82rem; }
 .btn:disabled { opacity: .4; pointer-events: none; }
+.btn-danger {
+  background: #ef4444;
+  color: #fff;
+}
+.btn-danger:hover {
+  background: #dc2626;
+}
 
 /* ─── Empty state ───────────────────────────────────────── */
 .empty-box {
@@ -771,12 +778,95 @@ button { cursor: pointer; font-family: inherit; }
   font-size: .85rem;
 }
 
+/* ─── Admin management ──────────────────────────────────── */
+.admin-section {
+  margin-top: 1.2rem;
+  background: var(--bg-card);
+  border: 1px solid var(--bg-light);
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+.admin-section h2 {
+  font-size: 1.1rem;
+  margin-bottom: .7rem;
+}
+.admin-block {
+  background: #faf9ff;
+  border: 1px solid var(--bg-light);
+  border-radius: var(--radius-sm);
+  padding: .85rem;
+  margin-top: .75rem;
+}
+.admin-subtitle {
+  font-size: .88rem;
+  font-weight: 600;
+  color: var(--ink-2);
+  margin-bottom: .5rem;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+.admin-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  align-items: center;
+}
+.admin-form.inline {
+  padding: .5rem 0;
+  border-top: 1px dashed var(--bg-light);
+}
+.admin-form input,
+.admin-form select {
+  height: 34px;
+  border: 1px solid var(--bg-light);
+  border-radius: var(--radius-sm);
+  padding: 0 .6rem;
+  min-width: 110px;
+  background: #fff;
+}
+.admin-form input[type="text"] {
+  min-width: 220px;
+}
+.admin-list {
+  margin-top: .7rem;
+}
+.admin-toolbar {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin-bottom: .65rem;
+}
+.admin-toolbar label {
+  font-size: .85rem;
+  color: var(--ink-2);
+}
+.admin-toolbar select {
+  height: 34px;
+  border: 1px solid var(--bg-light);
+  border-radius: var(--radius-sm);
+  padding: 0 .6rem;
+  background: #fff;
+}
+.admin-check {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  font-size: .85rem;
+  color: var(--ink-2);
+}
+
 /* ─── Responsive ─────────────────────────────────────────── */
 @media (max-width: 480px) {
   .page-wrapper { padding: 1.5rem 1rem 4rem; }
   .q-card { padding: 1.2rem; }
   .result-header { padding: 2rem 1.2rem 1.5rem; }
   .stats-grid { grid-template-columns: 1fr; }
+  .admin-form input[type="text"] {
+    min-width: 100%;
+  }
+  .admin-toolbar {
+    flex-wrap: wrap;
+  }
 }
 @media (max-width: 760px) {
   .navbar {

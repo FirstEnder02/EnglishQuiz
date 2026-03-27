@@ -17,6 +17,7 @@
   </div>
   <div class="navbar-actions">
     <th:block th:if="${loggedIn}">
+      <a th:if="${isAdmin}" class="btn btn-ghost btn-sm" th:href="@{/admin/quizzes}">Admin</a>
       <span class="navbar-user" th:text="'Hi, ' + ${currentUsername}">Hi, user</span>
       <a class="btn btn-ghost btn-sm" th:href="@{/logout}">Logout</a>
     </th:block>
