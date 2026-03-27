@@ -102,3 +102,16 @@ INSERT INTO answer (id, question_id, label, text, is_correct) VALUES
   (5034, 3003, 'B', 'It was raining', TRUE),
   (5035, 3003, 'C', 'They had no plans', FALSE),
   (5036, 3003, 'D', 'The house was comfortable', FALSE);
+
+  -- Xem role va update role cho user hoac admin sau khi da co tai khoan
+SELECT * FROM role;
+-- Gán ADMIN cho user 'admin'
+UPDATE users u
+JOIN role r ON r.name = 'ADMIN'
+SET u.role_id = r.id
+WHERE u.username = 'admin';
+-- Gán USER cho user 'user1
+UPDATE users u
+JOIN role r ON r.name = 'USER'
+SET u.role_id = r.id
+WHERE u.username = 'user1';

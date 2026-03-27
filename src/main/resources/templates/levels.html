@@ -14,6 +14,9 @@
 
   <h1 class="page-title">Choose a Level</h1>
   <p class="page-sub">Levels range from 1 (beginner) to 15 (advanced). Level 10+ is above average English skill.</p>
+  <div th:if="${!loggedIn}" class="auth-hint">
+    Please <a th:href="@{/login}">login</a> or <a th:href="@{/register}">register</a> to start a quiz.
+  </div>
 
   <div th:if="${levels == null or #lists.isEmpty(levels)}" class="empty-box">
     <h3>No levels available</h3>
